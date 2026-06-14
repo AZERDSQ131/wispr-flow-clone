@@ -8,7 +8,7 @@ Transcription is powered by [Mistral's Voxtral](https://mistral.ai/) model.
 
 ## Features
 
-- **Hold Fn** → records while held, transcribes and injects on release
+- **Hold Fn** → records while held, pauses media, then resumes and injects on release
 - **Double-tap Fn** → latches recording, tap Fn again to transcribe and inject
 - Native macOS HUD overlay (no Dock icon)
 - Always-on mic indicator in the corner of the screen
@@ -63,7 +63,7 @@ The app needs three permissions for **Terminal.app** (or whichever terminal you 
 
 | Gesture | Action |
 |---|---|
-| Hold **Fn** (≥ 0.25s) | Records while held → transcribes and injects on release |
+| Hold **Fn** (≥ 0.25s) | Records while held → pauses media, then resumes and injects on release |
 | **Double-tap Fn** | Latches recording → tap Fn once more to transcribe and inject |
 
 The transcribed text is injected at your cursor position in any app via clipboard paste.
