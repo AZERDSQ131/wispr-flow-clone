@@ -101,7 +101,6 @@ Créez un fichier .env à partir de .env.example :
         self.hotkey = HotkeyListener(
             on_start=self._on_hotkey_pressed,
             on_stop=self._on_hotkey_released,
-            on_cancel=self._on_hotkey_cancelled,
         )
 
     def _on_hotkey_pressed(self):
@@ -109,9 +108,6 @@ Créez un fichier .env à partir de .env.example :
 
     def _on_hotkey_released(self):
         self.cmd_queue.put(("stop_recording", None))
-
-    def _on_hotkey_cancelled(self):
-        self.cmd_queue.put(("cancel_recording", None))
 
     def _mute(self):
         self._saved_volume = _get_volume()
@@ -121,11 +117,6 @@ Créez un fichier .env à partir de .env.example :
         if self._saved_volume is not None:
             _set_volume(self._saved_volume)
             self._saved_volume = None
-
-    def _handle_cancel_recording(self):
-        self.recorder.stop_recording()
-        self.overlay.hide()
-        self._unmute()
 
     def _handle_start_recording(self):
         self._mute()
@@ -188,8 +179,6 @@ Le raccourci clavier ne fonctionnera pas sans cette permission.
                     cmd, data = self.cmd_queue.get_nowait()
                     if cmd == "start_recording":
                         self._handle_start_recording()
-                    elif cmd == "cancel_recording":
-                        self._handle_cancel_recording()
                     elif cmd == "stop_recording":
                         self._handle_stop_recording()
                     elif cmd == "inject_text":
