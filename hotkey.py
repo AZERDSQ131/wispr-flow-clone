@@ -53,6 +53,7 @@ class HotkeyListener:
         self._tap_timer = None
         self._fn_down = False
         self._recovering_from_timeout = False
+        self._latch_stop_time = 0.0
         self._run_loop = None
         self._thread = None
         self._tap = None
@@ -74,6 +75,8 @@ class HotkeyListener:
                 self._recovering_from_timeout = False
                 return
             if self._state == "IDLE":
+                if time.time() - self._latch_stop_time < 0.5:
+                    return
                 self._press_time = time.time()
                 self._state = "PRESSING"
                 cb = self.on_start
@@ -84,6 +87,7 @@ class HotkeyListener:
                 cb = self.on_start
 
             elif self._state == "LATCHED":
+                self._latch_stop_time = time.time()
                 self._state = "IDLE"
                 cb = self.on_stop
         if cb:
