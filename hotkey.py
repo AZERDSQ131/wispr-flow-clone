@@ -54,6 +54,7 @@ class HotkeyListener:
         self._fn_down = False
         self._run_loop = None
         self._thread = None
+        self._tap = None
 
     def _cancel_timer(self):
         if self._tap_timer:
@@ -66,37 +67,53 @@ class HotkeyListener:
                 self._state = "IDLE"
 
     def _on_fn_press(self):
+        cb = None
         with self._lock:
             if self._state == "IDLE":
                 self._press_time = time.time()
                 self._state = "PRESSING"
-                self.on_start()
+                cb = self.on_start
 
             elif self._state == "FIRST_TAP":
                 self._cancel_timer()
                 self._state = "LATCHED"
-                self.on_start()
+                cb = self.on_start
 
             elif self._state == "LATCHED":
                 self._state = "IDLE"
-                self.on_stop()
+                cb = self.on_stop
+        if cb:
+            cb()
 
     def _on_fn_release(self):
+        cb = None
         with self._lock:
             if self._state == "PRESSING":
                 duration = time.time() - self._press_time
                 if duration >= HOLD_THRESHOLD:
                     self._state = "IDLE"
-                    self.on_stop()
+                    cb = self.on_stop
                 else:
                     self._state = "FIRST_TAP"
-                    self.on_cancel()
+                    cb = self.on_cancel
                     self._tap_timer = threading.Timer(
                         DOUBLE_TAP_WINDOW, self._tap_timeout
                     )
                     self._tap_timer.start()
+        if cb:
+            cb()
 
     def _event_callback(self, proxy, event_type, event, refcon):
+        # Le système peut désactiver le tap (timeout) → le réactiver immédiatement
+        # et simuler un relâchement de Fn pour débloquer l'état
+        if event_type in (0xFFFFFFFE, 0xFFFFFFFF):
+            if self._tap:
+                CGEventTapEnable(self._tap, True)
+            if self._fn_down:
+                self._fn_down = False
+                self._on_fn_release()
+            return event
+
         if event_type == kCGEventFlagsChanged:
             flags = CGEventGetFlags(event)
             fn_pressed = bool(flags & kCGEventFlagMaskSecondaryFn)
@@ -125,6 +142,7 @@ class HotkeyListener:
             self.permission_granted = False
             return
 
+        self._tap = tap
         source = CFMachPortCreateRunLoopSource(None, tap, 0)
         self._run_loop = CFRunLoopGetCurrent()
         CFRunLoopAddSource(self._run_loop, source, kCFRunLoopDefaultMode)
