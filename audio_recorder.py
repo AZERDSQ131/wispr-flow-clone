@@ -30,6 +30,14 @@ class AudioRecorder:
         self._mic_index = _find_builtin_mic()
 
     def start_recording(self):
+        # Ferme proprement un éventuel stream précédent avant d'en ouvrir un nouveau
+        if self.stream:
+            try:
+                self.stream.stop()
+                self.stream.close()
+            except Exception:
+                pass
+            self.stream = None
         self.recording = []
         self._done = False
         self.stream = sd.InputStream(
@@ -48,8 +56,11 @@ class AudioRecorder:
 
     def stop_recording(self):
         if self.stream:
-            self.stream.stop()
-            self.stream.close()
+            try:
+                self.stream.stop()
+                self.stream.close()
+            except Exception:
+                pass
             self.stream = None
 
         if not self.recording:

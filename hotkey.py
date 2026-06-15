@@ -74,6 +74,7 @@ class HotkeyListener:
             if self._state == "FIRST_TAP":
                 self._state = "IDLE"
                 cb = self.on_stop
+        print(f"[hotkey] tap_timeout → {'on_stop' if cb else 'rien'}", flush=True)
         if cb:
             cb()
 
@@ -82,17 +83,19 @@ class HotkeyListener:
         with self._lock:
             if self._recovering_from_timeout:
                 self._recovering_from_timeout = False
+                print("[hotkey] press ignoré (recovering_from_timeout)", flush=True)
                 return
 
+            prev = self._state
             if self._state == "IDLE":
                 if time.time() - self._latch_stop_time < LATCH_COOLDOWN:
+                    print("[hotkey] press ignoré (latch cooldown)", flush=True)
                     return
                 self._press_time = time.time()
                 self._state = "PRESSING"
                 cb = self.on_start
 
             elif self._state == "FIRST_TAP":
-                # 2e tap : bascule en LATCHED sans couper/relancer le recording
                 self._cancel_timer()
                 self._state = "LATCHED"
 
@@ -100,25 +103,28 @@ class HotkeyListener:
                 self._latch_stop_time = time.time()
                 self._state = "IDLE"
                 cb = self.on_stop
+
+        print(f"[hotkey] press  {prev} → {self._state}  cb={'on_start' if cb is self.on_start else 'on_stop' if cb is self.on_stop else 'rien'}", flush=True)
         if cb:
             cb()
 
     def _on_fn_release(self):
         cb = None
         with self._lock:
+            prev = self._state
             if self._state == "PRESSING":
                 duration = time.time() - self._press_time
                 if duration >= HOLD_THRESHOLD:
-                    # Maintien long → stop immédiat au relâchement
                     self._state = "IDLE"
                     cb = self.on_stop
                 else:
-                    # Tap rapide → attend un 2e press ou le timeout
                     self._state = "FIRST_TAP"
                     self._tap_timer = threading.Timer(
                         DOUBLE_TAP_WINDOW, self._tap_timeout
                     )
                     self._tap_timer.start()
+
+        print(f"[hotkey] release {prev} → {self._state}  cb={'on_stop' if cb else 'rien'}", flush=True)
         if cb:
             cb()
 

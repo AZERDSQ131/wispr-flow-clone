@@ -119,12 +119,16 @@ Créez un fichier .env à partir de .env.example :
             self._saved_volume = None
 
     def _handle_start_recording(self):
+        print("[main] → start_recording", flush=True)
         self._mute()
         self.overlay.show_recording()
         self.recorder.start_recording()
+        print("[main] stream ouvert", flush=True)
 
     def _handle_stop_recording(self):
+        print("[main] → stop_recording", flush=True)
         audio_data = self.recorder.stop_recording()
+        print(f"[main] stream fermé, audio={'oui' if audio_data is not None else 'silence'}", flush=True)
         self._unmute()
         self.overlay.show_processing()
         if audio_data is None:
