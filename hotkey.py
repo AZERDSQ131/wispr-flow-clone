@@ -10,19 +10,15 @@ from CoreFoundation import (
 )
 from Quartz import (
     CGEventGetFlags,
-    CGEventSetFlags,
-    CGEventSetIntegerValueField,
-    CGEventSetType,
     CGEventSourceFlagsState,
     CGEventTapCreate,
     CGEventTapEnable,
     CFMachPortCreateRunLoopSource,
     kCGEventFlagsChanged,
     kCGEventSourceStateCombinedSessionState,
-    kCGEventTapOptionDefault,
+    kCGEventTapOptionListenOnly,
     kCGHIDEventTap,
     kCGHeadInsertEventTap,
-    kCGKeyboardEventKeycode,
 )
 
 # Fn est un modificateur macOS, pas une touche ordinaire.
@@ -149,15 +145,13 @@ class HotkeyListener:
                     self._on_fn_press()
                 else:
                     self._on_fn_release()
-            CGEventSetFlags(event, flags & ~kCGEventFlagMaskSecondaryFn)
-            CGEventSetType(event, 0)  # kCGEventNull
         return event
 
     def _run(self):
         tap = CGEventTapCreate(
             kCGHIDEventTap,
             kCGHeadInsertEventTap,
-            kCGEventTapOptionDefault,
+            kCGEventTapOptionListenOnly,
             _MASK,
             self._event_callback,
             None,
